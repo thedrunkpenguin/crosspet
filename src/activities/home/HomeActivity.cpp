@@ -22,12 +22,9 @@
 #include "activities/tools/WeatherActivity.h"
 #include "WifiCredentialStore.h"
 #include <WiFi.h>
-#include "ble/BleRemoteManager.h"
 #include "pet/PetEvolution.h"
 #include "pet/PetManager.h"
 #include "util/StringUtils.h"
-
-extern BleRemoteManager bleManager;
 
 // ── Buffer management ─────────────────────────────────────────────────────────
 
@@ -234,7 +231,6 @@ void HomeActivity::performSyncAfterWifi() {
       if (WiFi.status() != WL_CONNECTED) {
         WiFi.disconnect(false);
         WiFi.mode(WIFI_OFF);
-        bleManager.resume();
         weatherRefreshing = false;
         snprintf(syncBuf, sizeof(syncBuf), "%s", tr(STR_WIFI_CONN_FAILED));
         syncResultMsg = syncBuf;
@@ -246,7 +242,6 @@ void HomeActivity::performSyncAfterWifi() {
   }
 
   int rc = WeatherActivity::silentRefresh();
-  bleManager.resume();
   weatherRefreshing = false;
   if (rc == 0)      snprintf(syncBuf, sizeof(syncBuf), "%s", tr(STR_SYNC_OK));
   else if (rc == 2) snprintf(syncBuf, sizeof(syncBuf), "%s", tr(STR_WIFI_TIMEOUT));
@@ -266,7 +261,6 @@ void HomeActivity::doSync() {
     requestUpdate();
     return;
   }
-  bleManager.suspend();
   performSyncAfterWifi();
 }
 

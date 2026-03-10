@@ -12,13 +12,11 @@
 #include "CrossPetSettings.h"
 #include "WifiCredentialStore.h"
 #include "activities/network/WifiSelectionActivity.h"
-#include "ble/BleRemoteManager.h"
 #include "components/UITheme.h"
 #include "components/icons/weather.h"
 #include "fontIds.h"
 #include "network/HttpDownloader.h"
 
-extern BleRemoteManager bleManager;
 
 // All 63 provinces/cities of Vietnam, sorted alphabetically
 const CityCoord WeatherActivity::CITIES[CITY_COUNT] = {
@@ -116,7 +114,6 @@ void WeatherActivity::onEnter() {
   detectedLat[0] = '\0';
   detectedLon[0] = '\0';
 
-  bleManager.suspend();
   state = WIFI_CONNECTING;
   statusMessage = tr(STR_FETCHING_WEATHER);
   requestUpdate(true);
@@ -454,7 +451,6 @@ void WeatherActivity::onExit() {
   delay(100);
   WiFi.mode(WIFI_OFF);
   delay(100);
-  bleManager.resume();
   Activity::onExit();
 }
 

@@ -21,7 +21,7 @@ enum class SettingAction {
   ClearCache,
   CheckForUpdates,
   Language,
-  BleRemote,  // BLE remote pairing (Phase 4 will add BleRemotePairingActivity)
+  BleRemote,  // Bluetooth HID configuration
 };
 
 struct SettingInfo {

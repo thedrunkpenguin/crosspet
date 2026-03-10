@@ -39,118 +39,100 @@ Your chicken grows with every page you read. Evolution system: Egg → Hatchling
 
 ### Tools
 - **Weather** — current weather via Open-Meteo API
-- **Clock with lunar calendar** — month navigation with Vietnamese lunar dates
-- **Pomodoro timer** — configurable work/break intervals
-- **BLE Presenter** — wireless slide controller for presentations
-- **5 mini games** — Chess, Caro (Gomoku), Sudoku, Minesweeper, 2048
+# CrossPet (Bluetooth HID fork)
 
-### Home Screen
-- Cover art + reading progress for recent books in top panel
-- 3-row grid: Tools, Pet | Library, Recent | Transfer, Settings
-- Header clock and cached weather temperature
+This repository is a fork of [trilwu/crosspet](https://github.com/trilwu/crosspet) with expanded Bluetooth HID support for external page-turn controllers.
 
-### Connectivity
-- **WiFi book upload** and Calibre/OPDS browser
-- **WiFi OTA updates**
-- **BLE 5.0** remote control and presenter mode
-- **SD-first layout caching** for performance
+![](./docs/images/cover.jpg)
 
-Everything else (EPUB rendering, KOReader Sync, WiFi upload) is inherited from CrossPoint.
+## Firmware Downloads (front page)
 
-> Fork of [crosspoint-reader/crosspoint-reader](https://github.com/crosspoint-reader/crosspoint-reader). Not affiliated with Xteink.
+- **Debug capture firmware (for collecting HID logs):** [firmware/crosspet-bt-debug-capture.bin](./firmware/crosspet-bt-debug-capture.bin)
+- **Production firmware (slim, logging disabled):** [firmware/crosspet-bt-production.bin](./firmware/crosspet-bt-production.bin)
 
----
+## What was added (Bluetooth implementation)
 
-## Installing
+- New BLE HID manager in `lib/hal/BluetoothHIDManager.*`
+- Device profile system in `lib/hal/DeviceProfiles.*`
+- Bluetooth settings UI activity in `src/activities/settings/BluetoothSettingsActivity.*`
+- Stable key injection path with startup noise gate, key cooldown, and profile-based key mapping
+- Inactivity disconnect handling to keep long reading sessions stable
 
-### Web (latest firmware)
+## Supported devices
 
-1. Connect your Xteink X4 to your computer via USB-C and wake/unlock the device
-2. Go to https://xteink.dve.al/ and click "Flash CrossPoint firmware"
+### Confirmed working
 
-To revert back to the official firmware, you can flash the latest official firmware from https://xteink.dve.al/, or swap
-back to the other partition using the "Swap boot partition" button here https://xteink.dve.al/debug.
+- **MINI_KEYBOARD** (keypad profile)
+- **GameBrick-style BLE controller** (D-pad profile)
 
-### Manual
+### Likely to work / may be supported with profiling
 
-See [Development](#development) below.
+- BLE HID remotes that send standard keyboard or consumer-page keys
+- Generic page-turn controllers presenting as BLE HID keyboard
 
-## Development
+If your device connects but buttons do not map correctly, capture debug logs (below) and open a support request.
 
-### Prerequisites
+## How users can capture debug logs for new devices
 
-* **PlatformIO Core** (`pio`) or **VS Code + PlatformIO IDE**
-* Python 3.8+
-* USB-C cable for flashing the ESP32-C3
-* Xteink X4
-
-### Checking out the code
-
-```
-git clone --recursive https://github.com/trilwu/crosspet
-```
-
-### Flashing your device
-
-Connect your Xteink X4 to your computer via USB-C and run:
+1. Flash **debug capture firmware**: [firmware/crosspet-bt-debug-capture.bin](./firmware/crosspet-bt-debug-capture.bin)
+2. Connect the X4 by USB-C
+3. Start serial monitor:
 
 ```sh
-pio run --target upload
+pio device monitor --port /dev/ttyACM2 --baud 115200
 ```
 
-### Debugging
+4. On device: open **Settings → Bluetooth**, scan and connect your BLE remote
+5. Press each remote button a few times
+6. Copy log lines that include these tags:
+	- `[INF] [BT] Scan device:`
+	- `[DBG] [BT] HID Report (...)`
+	- `[INF] [BT] >>> BUTTON PRESSED:`
+	- `[INF] [BT] Matched profile ...` or unmapped key lines
 
-Capture detailed logs from the serial port:
+## How to request support for a new BLE device
 
-```python
-python3 -m pip install pyserial colorama matplotlib
-```
+Open an issue in this fork and include:
+
+- Device name + product link
+- BLE MAC prefix shown in logs (first 3 bytes)
+- Full button logs from debug firmware
+- Which physical button should map to Page Forward / Page Back
+
+With that info, a new profile can be added to `DeviceProfiles` and rolled into future firmware.
+
+## Build variants
+
+- `bt_debug_capture` (verbose logs enabled)
+- `bt_production` (serial logging removed for slim production use)
+
+Build commands:
 
 ```sh
-# Linux
-python3 scripts/debugging_monitor.py
-
-# macOS
-python3 scripts/debugging_monitor.py /dev/cu.usbmodem2101
+pio run -e bt_debug_capture
+pio run -e bt_production
 ```
 
-## Internals
+## Flashing
 
-The ESP32-C3 only has ~380KB of usable RAM. CrossPoint aggressively caches data to the SD card to minimize RAM usage.
+### Web flasher
 
-### Data caching
+1. Connect X4 via USB-C
+2. Go to https://xteink.dve.al/
+3. In OTA/manual section, select one of the `.bin` files above and flash
 
-The first time chapters of a book are loaded, they are cached to the SD card at `.crosspoint/`:
+### PlatformIO upload
 
-```
-.crosspoint/
-├── epub_12471232/       # Each EPUB cached to epub_<hash>
-│   ├── progress.bin     # Reading progress
-│   ├── cover.bmp        # Book cover image
-│   ├── book.bin         # Book metadata
-│   └── sections/        # Chapter data
-│       ├── 0.bin
-│       ├── 1.bin
-│       └── ...
-├── reading_stats.bin    # Reading statistics (v2)
-└── weather_cache.json   # Weather data cache
+```sh
+pio run -e bt_production -t upload
 ```
 
-Deleting `.crosspoint/` clears the entire cache. Moving a book file resets its reading progress.
+Use `bt_debug_capture` instead when collecting logs.
 
-For more details, see [file formats](./docs/file-formats.md).
+## Upstream + contribution
 
-## Contributing
+- Upstream base: [trilwu/crosspet](https://github.com/trilwu/crosspet)
+- This fork focuses on BLE HID compatibility and device onboarding workflow
 
-Contributions welcome! See [contributing docs](./docs/contributing/README.md).
+CrossPet/CrossPoint is not affiliated with Xteink.
 
-1. Fork the repo
-2. Create a branch (`feature/your-feature`)
-3. Make changes
-4. Submit a PR
-
----
-
-CrossPet Reader is **not affiliated with Xteink or any manufacturer of the X4 hardware**.
-
-Based on [CrossPoint Reader](https://github.com/crosspoint-reader/crosspoint-reader). Inspired by [diy-esp32-epub-reader](https://github.com/atomic14/diy-esp32-epub-reader) by atomic14.

@@ -21,6 +21,7 @@
 #include "QrDisplayActivity.h"
 #include "RecentBooksStore.h"
 #include "ReadingStats.h"
+#include "activities/settings/BluetoothSettingsActivity.h"
 #include "components/UITheme.h"
 #include "fontIds.h"
 #include "util/ScreenshotUtil.h"
@@ -258,7 +259,7 @@ void EpubReaderActivity::loop() {
       restoreSavedPosition();
       return;
     }
-    onGoHome();
+    finish();
     return;
   }
 
@@ -449,6 +450,11 @@ void EpubReaderActivity::onReaderMenuConfirm(EpubReaderMenuActivity::MenuAction 
       }
       // If no text or page loading failed, just close menu
       requestUpdate();
+      break;
+    }
+    case EpubReaderMenuActivity::MenuAction::BLUETOOTH: {
+      startActivityForResult(std::make_unique<BluetoothSettingsActivity>(renderer, mappedInput),
+                             [this](const ActivityResult& result) { requestUpdate(); });
       break;
     }
     case EpubReaderMenuActivity::MenuAction::GO_HOME: {

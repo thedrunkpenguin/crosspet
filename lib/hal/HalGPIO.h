@@ -28,12 +28,14 @@ class HalGPIO {
   uint8_t prevBleState = 0;
   uint8_t bleWasPressed = 0;
   uint8_t bleWasReleased = 0;
+  uint8_t virtualButtonQueue = 0;
 
  public:
   HalGPIO() = default;
 
   // Set BLE-injected button bitmask (called from BLE callback task)
   void setBleButtonState(uint8_t state) { bleState = state; }
+  void injectButtonPress(uint8_t buttonIndex) { virtualButtonQueue |= (1 << buttonIndex); }
 
   // Start button GPIO and setup SPI for screen and SD card
   void begin();

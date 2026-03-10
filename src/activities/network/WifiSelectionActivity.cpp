@@ -8,21 +8,19 @@
 
 #include <map>
 
+#include "BluetoothHIDManager.h"
 #include "CrossPointSettings.h"
 #include "MappedInputManager.h"
 #include "WifiCredentialStore.h"
 #include "activities/util/KeyboardEntryActivity.h"
-#include "ble/BleRemoteManager.h"
 #include "components/UITheme.h"
 #include "fontIds.h"
 
-extern BleRemoteManager bleManager;
 
 void WifiSelectionActivity::onEnter() {
   Activity::onEnter();
 
   // Suspend BLE — WiFi and BLE share the 2.4GHz radio
-  bleManager.suspend();
 
   // Load saved WiFi credentials - SD card operations need lock as we use SPI
   // for both
@@ -227,6 +225,18 @@ void WifiSelectionActivity::attemptConnection() {
   connectedIP.clear();
   connectionError.clear();
   requestUpdate();
+
+  // CRITICAL: Disable Bluetooth when enabling WiFi
+  // ESP32-C3 cannot have both WiFi and BLE enabled simultaneously
+  try {
+    auto& btMgr = BluetoothHIDManager::getInstance();
+    if (btMgr.isEnabled()) {
+      LOG_INF("WIFI", "Disabling Bluetooth to enable WiFi (mutual exclusion)");
+      btMgr.disable();
+    }
+  } catch (...) {
+    LOG_DBG("WIFI", "Could not access Bluetooth manager");
+  }
 
   WiFi.mode(WIFI_STA);
 

@@ -11,7 +11,8 @@ void HalGPIO::update() {
   inputMgr.update();
 
   // Detect BLE button press/release edges
-  uint8_t currentBle = bleState;
+  uint8_t currentBle = bleState | virtualButtonQueue;
+  virtualButtonQueue = 0;
   bleWasPressed = currentBle & ~prevBleState;   // newly pressed bits
   bleWasReleased = prevBleState & ~currentBle;  // newly released bits
   prevBleState = currentBle;

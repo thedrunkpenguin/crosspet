@@ -4,7 +4,7 @@
 #include <Logging.h>
 #include <WiFi.h>
 
-#include "BleRemotePairingActivity.h"
+#include "BluetoothSettingsActivity.h"
 #include "ButtonRemapActivity.h"
 #include "CalibreSettingsActivity.h"
 #include "ClearCacheActivity.h"
@@ -16,7 +16,6 @@
 #include "SettingsList.h"
 #include "StatusBarSettingsActivity.h"
 #include "activities/network/WifiSelectionActivity.h"
-#include "ble/BleRemoteManager.h"
 #include "components/UITheme.h"
 #include "fontIds.h"
 
@@ -185,18 +184,15 @@ void SettingsActivity::toggleCurrentSetting() {
       case SettingAction::OPDSBrowser:
         startActivityForResult(std::make_unique<CalibreSettingsActivity>(renderer, mappedInput), resultHandler);
         break;
-      case SettingAction::Network: {
-        extern BleRemoteManager bleManager;
+      case SettingAction::Network:
         startActivityForResult(std::make_unique<WifiSelectionActivity>(renderer, mappedInput, false),
                                [this](const ActivityResult&) {
                                  // WifiSelectionActivity doesn't own WiFi lifecycle — clean up here
                                  WiFi.disconnect(false);
                                  WiFi.mode(WIFI_OFF);
-                                 bleManager.resume();
                                  SETTINGS.saveToFile();
                                });
         break;
-      }
       case SettingAction::ClearCache:
         startActivityForResult(std::make_unique<ClearCacheActivity>(renderer, mappedInput), resultHandler);
         break;
@@ -208,7 +204,7 @@ void SettingsActivity::toggleCurrentSetting() {
         break;
       case SettingAction::BleRemote:
         startActivityForResult(
-            std::make_unique<BleRemotePairingActivity>(renderer, mappedInput),
+            std::make_unique<BluetoothSettingsActivity>(renderer, mappedInput),
             resultHandler);
         break;
       case SettingAction::None:
