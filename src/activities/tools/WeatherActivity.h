@@ -66,6 +66,14 @@ class WeatherActivity final : public Activity {
   int cityCursor = 0;      // Cursor in city list (0=Auto, 1..63=cities)
   int cityScrollTop = 0;   // First visible item in city list
 
+  // Unit conversion helpers
+  static float celsiusToFahrenheit(float celsius) {
+    return celsius * 9.0f / 5.0f + 32.0f;
+  }
+  static float kmhToMph(float kmh) {
+    return kmh * 0.621371f;
+  }
+
   void onWifiConnected();
   void fetchWeather();
   bool parseWeather(const std::string& json);

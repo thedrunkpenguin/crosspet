@@ -48,6 +48,11 @@ inline const std::vector<SettingInfo>& getSettingsList() {
           [](uint8_t v) { PET_SETTINGS.homeShowWeather = v; PET_SETTINGS.saveToFile(); },
           "homeShowWeather", StrId::STR_CAT_DISPLAY),
       SettingInfo::DynamicToggle(
+          StrId::STR_USE_FAHRENHEIT,
+          [] { return PET_SETTINGS.useFahrenheit; },
+          [](uint8_t v) { PET_SETTINGS.useFahrenheit = v; PET_SETTINGS.saveToFile(); },
+          "useFahrenheit", StrId::STR_CAT_DISPLAY),
+      SettingInfo::DynamicToggle(
           StrId::STR_HOME_PET_STATUS,
           [] { return PET_SETTINGS.homeShowPetStatus; },
           [](uint8_t v) { PET_SETTINGS.homeShowPetStatus = v; PET_SETTINGS.saveToFile(); },

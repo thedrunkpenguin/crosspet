@@ -22,6 +22,9 @@ class CrossPetSettings {
   uint8_t homeShowWeather = 1;
   uint8_t homeShowPetStatus = 1;
 
+  // Temperature unit preference (1=Fahrenheit/MPH, 0=Celsius/KM/h)
+  uint8_t useFahrenheit = 0;
+
  private:
   CrossPetSettings() = default;
   static CrossPetSettings instance;
