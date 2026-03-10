@@ -6,9 +6,15 @@
 #include "HalStorage.h"
 #include "Logging.h"
 #include "esp_debug_helpers.h"
+
+#if __has_include("esp_private/esp_cpu_internal.h") && __has_include("esp_private/panic_internal.h")
 #include "esp_private/esp_cpu_internal.h"
 #include "esp_private/esp_system_attr.h"
 #include "esp_private/panic_internal.h"
+#define HALSYSTEM_HAS_PANIC_INTERNAL 1
+#else
+#define HALSYSTEM_HAS_PANIC_INTERNAL 0
+#endif
 
 #define MAX_PANIC_STACK_DEPTH 32
 
@@ -17,6 +23,7 @@ RTC_NOINIT_ATTR HalSystem::StackFrame panicStack[MAX_PANIC_STACK_DEPTH];
 
 extern "C" {
 
+#if HALSYSTEM_HAS_PANIC_INTERNAL
 void __real_panic_abort(const char* message);
 void __real_panic_print_backtrace(const void* frame, int core);
 
@@ -66,6 +73,7 @@ void IRAM_ATTR __wrap_panic_print_backtrace(const void* frame, int core) {
 
   __real_panic_print_backtrace(frame, core);
 }
+#endif
 }
 
 namespace HalSystem {
@@ -142,7 +150,11 @@ std::string getPanicInfo(bool full) {
 
 bool isRebootFromPanic() {
   const auto resetReason = esp_reset_reason();
+#ifdef ESP_RST_CPU_LOCKUP
   return resetReason == ESP_RST_PANIC || resetReason == ESP_RST_CPU_LOCKUP;
+#else
+  return resetReason == ESP_RST_PANIC;
+#endif
 }
 
 }  // namespace HalSystem

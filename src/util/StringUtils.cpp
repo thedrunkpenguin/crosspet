@@ -2,7 +2,25 @@
 
 #include <Utf8.h>
 
+#include <cstdio>
+
 namespace StringUtils {
+
+void formatReadingDuration(char* buf, size_t size, uint32_t secs) {
+  const uint32_t mins = secs / 60;
+  const uint32_t hours = mins / 60;
+  const uint32_t days = hours / 24;
+
+  if (mins < 1) {
+    snprintf(buf, size, "< 1 min");
+  } else if (hours < 1) {
+    snprintf(buf, size, "%lu min", (unsigned long)mins);
+  } else if (days < 1) {
+    snprintf(buf, size, "%lu hr %lu min", (unsigned long)hours, (unsigned long)(mins % 60));
+  } else {
+    snprintf(buf, size, "%lu days %lu hr", (unsigned long)days, (unsigned long)(hours % 24));
+  }
+}
 
 std::string sanitizeFilename(const std::string& name, size_t maxBytes) {
   std::string result;

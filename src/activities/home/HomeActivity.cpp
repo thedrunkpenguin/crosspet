@@ -21,6 +21,7 @@
 #include "activities/network/WifiSelectionActivity.h"
 #include "activities/tools/WeatherActivity.h"
 #include "WifiCredentialStore.h"
+#include <FsHelpers.h>
 #include <WiFi.h>
 #include "pet/PetEvolution.h"
 #include "pet/PetManager.h"
@@ -73,15 +74,14 @@ void HomeActivity::loadRecentCovers(int coverHeight) {
       std::string thumbPath = UITheme::getCoverThumbPath(book.coverBmpPath, coverHeight);
       if (!Storage.exists(thumbPath.c_str())) {
         bool generated = false;
-        if (StringUtils::checkFileExtension(book.path, ".epub")) {
+        if (FsHelpers::hasEpubExtension(book.path)) {
           Epub epub(book.path, "/.crosspoint");
           epub.load(false, true);
           if (!showingLoading) { showingLoading = true; popup = GUI.drawPopup(renderer, tr(STR_LOADING_POPUP)); }
           GUI.fillPopupProgress(renderer, popup, 10 + progress * (90 / (int)recentBooks.size()));
           generated = epub.generateThumbBmp(coverHeight);
           if (!generated) { RECENT_BOOKS.updateBook(book.path, book.title, book.author, ""); book.coverBmpPath = ""; }
-        } else if (StringUtils::checkFileExtension(book.path, ".xtch") ||
-                   StringUtils::checkFileExtension(book.path, ".xtc")) {
+        } else if (FsHelpers::hasXtcExtension(book.path)) {
           Xtc xtc(book.path, "/.crosspoint");
           if (xtc.load()) {
             if (!showingLoading) { showingLoading = true; popup = GUI.drawPopup(renderer, tr(STR_LOADING_POPUP)); }
