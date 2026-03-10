@@ -148,6 +148,8 @@ bool JsonSettingsIO::saveSettings(const CrossPointSettings& s, const char* path)
   doc["statusBarClock"] = s.statusBarClock;
   doc["statusBarProgressBarThickness"] = s.statusBarProgressBarThickness;
   doc["weatherCity"] = s.weatherCity;
+  doc["weatherTempUnit"] = s.weatherTempUnit;
+  doc["weatherWindUnit"] = s.weatherWindUnit;
 
   String json;
   serializeJson(doc, json);
@@ -255,6 +257,10 @@ bool JsonSettingsIO::loadSettings(CrossPointSettings& s, const char* json, bool*
   s.bleBondedDeviceAddrType = doc["bleBondedDeviceAddrType"] | (uint8_t)0;
   s.weatherCity = doc["weatherCity"] | (uint8_t)0;
   if (s.weatherCity > 63) s.weatherCity = 0;  // 0=Auto, 1-63=manual cities
+  s.weatherTempUnit = clamp(doc["weatherTempUnit"] | (uint8_t)S::WEATHER_CELSIUS,
+                            S::WEATHER_TEMP_UNIT_COUNT, S::WEATHER_CELSIUS);
+  s.weatherWindUnit = clamp(doc["weatherWindUnit"] | (uint8_t)S::WEATHER_KMH,
+                            S::WEATHER_WIND_UNIT_COUNT, S::WEATHER_KMH);
 
   LOG_DBG("CPS", "Settings loaded from file");
 

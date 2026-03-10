@@ -205,7 +205,9 @@ void HomeActivity::renderHeaderClock() {
     char wTime[8] = "";
     if (WeatherActivity::loadWeatherCache(wData, wCity, wTime, sizeof(wTime))) {
       char wBuf[16];
-      snprintf(wBuf, sizeof(wBuf), "%.0f°C", wData.temperature);
+      snprintf(wBuf, sizeof(wBuf), "%.0f%s",
+               WeatherActivity::convertTemperatureForDisplay(wData.temperature),
+               WeatherActivity::getTemperatureUnitSymbol());
       renderer.drawText(SMALL_FONT_ID, weatherX, 5, wBuf);
     }
   }

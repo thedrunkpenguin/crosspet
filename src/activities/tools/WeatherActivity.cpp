@@ -293,6 +293,28 @@ const char* WeatherActivity::weatherCodeToString(int code) {
   return tr(STR_WEATHER_THUNDERSTORM);
 }
 
+float WeatherActivity::convertTemperatureForDisplay(float celsius) {
+  if (SETTINGS.weatherTempUnit == CrossPointSettings::WEATHER_FAHRENHEIT) {
+    return (celsius * 9.0f / 5.0f) + 32.0f;
+  }
+  return celsius;
+}
+
+float WeatherActivity::convertWindSpeedForDisplay(float kmh) {
+  if (SETTINGS.weatherWindUnit == CrossPointSettings::WEATHER_MPH) {
+    return kmh * 0.621371f;
+  }
+  return kmh;
+}
+
+const char* WeatherActivity::getTemperatureUnitSymbol() {
+  return SETTINGS.weatherTempUnit == CrossPointSettings::WEATHER_FAHRENHEIT ? "°F" : "°C";
+}
+
+const char* WeatherActivity::getWindSpeedUnitLabel() {
+  return SETTINGS.weatherWindUnit == CrossPointSettings::WEATHER_MPH ? "mph" : "km/h";
+}
+
 void WeatherActivity::saveWeatherCache() {
   JsonDocument doc;
   doc["temp"] = weather.temperature;
@@ -615,22 +637,15 @@ void WeatherActivity::render(RenderLock&&) {
     y += ICON_DISPLAY_SIZE + 8;
 
     // Large temperature
-    float displayTemp = weather.temperature;
-    const char* tempUnit = "°C";
-    if (PET_SETTINGS.useFahrenheit) {
-      displayTemp = celsiusToFahrenheit(weather.temperature);
-      tempUnit = "°F";
-    }
+    const float displayTemp = convertTemperatureForDisplay(weather.temperature);
+    const float displayFeelsLike = convertTemperatureForDisplay(weather.feelsLike);
+    const char* tempUnit = getTemperatureUnitSymbol();
     snprintf(buf, sizeof(buf), "%.0f%s", displayTemp, tempUnit);
     renderer.drawCenteredText(NOTOSANS_18_FONT_ID, y, buf, true, EpdFontFamily::BOLD);
     y += renderer.getLineHeight(NOTOSANS_18_FONT_ID) + 4;
 
     // Feels like
-    float displayFeels = weather.feelsLike;
-    if (PET_SETTINGS.useFahrenheit) {
-      displayFeels = celsiusToFahrenheit(weather.feelsLike);
-    }
-    snprintf(buf, sizeof(buf), "%s %.0f%s", tr(STR_FEELS_LIKE), displayFeels, tempUnit);
+    snprintf(buf, sizeof(buf), "%s %.0f%s", tr(STR_FEELS_LIKE), displayFeelsLike, tempUnit);
     renderer.drawCenteredText(UI_10_FONT_ID, y, buf);
     y += renderer.getLineHeight(UI_10_FONT_ID) + 16;
 
@@ -654,13 +669,8 @@ void WeatherActivity::render(RenderLock&&) {
     snprintf(buf, sizeof(buf), "%s", tr(STR_WIND));
     tw = renderer.getTextWidth(SMALL_FONT_ID, buf);
     renderer.drawText(SMALL_FONT_ID, cardX + colW + (colW - tw) / 2, detailY, buf);
-    float displayWind = weather.windSpeed;
-    const char* windUnit = "km/h";
-    if (PET_SETTINGS.useFahrenheit) {
-      displayWind = kmhToMph(weather.windSpeed);
-      windUnit = "mph";
-    }
-    snprintf(buf, sizeof(buf), "%.1f %s", displayWind, windUnit);
+    const float displayWind = convertWindSpeedForDisplay(weather.windSpeed);
+    snprintf(buf, sizeof(buf), "%.1f %s", displayWind, getWindSpeedUnitLabel());
     tw = renderer.getTextWidth(UI_12_FONT_ID, buf);
     renderer.drawText(UI_12_FONT_ID, cardX + colW + (colW - tw) / 2, detailY + 26, buf, true, EpdFontFamily::BOLD);
 
@@ -686,17 +696,11 @@ void WeatherActivity::render(RenderLock&&) {
         renderer.drawIcon(fIcon, cx - WEATHER_ICON_SIZE / 2, y + 20, WEATHER_ICON_SIZE, WEATHER_ICON_SIZE);
 
         // High/Low temp
-        float maxTemp = f.tempMax;
-        float minTemp = f.tempMin;
-        if (PET_SETTINGS.useFahrenheit) {
-          maxTemp = celsiusToFahrenheit(f.tempMax);
-          minTemp = celsiusToFahrenheit(f.tempMin);
-        }
-        snprintf(buf, sizeof(buf), "%.0f°", maxTemp);
+        snprintf(buf, sizeof(buf), "%.0f%s", convertTemperatureForDisplay(f.tempMax), tempUnit);
         tw = renderer.getTextWidth(SMALL_FONT_ID, buf);
         renderer.drawText(SMALL_FONT_ID, cx - tw / 2, y + 56, buf, true, EpdFontFamily::BOLD);
 
-        snprintf(buf, sizeof(buf), "%.0f°", minTemp);
+        snprintf(buf, sizeof(buf), "%.0f%s", convertTemperatureForDisplay(f.tempMin), tempUnit);
         tw = renderer.getTextWidth(SMALL_FONT_ID, buf);
         renderer.drawText(SMALL_FONT_ID, cx - tw / 2, y + 74, buf);
       }

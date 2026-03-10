@@ -139,6 +139,9 @@ class CrossPointSettings {
   // Image rendering in EPUB reader
   enum IMAGE_RENDERING { IMAGES_DISPLAY = 0, IMAGES_PLACEHOLDER = 1, IMAGES_SUPPRESS = 2, IMAGE_RENDERING_COUNT };
 
+  enum WEATHER_TEMP_UNIT { WEATHER_CELSIUS = 0, WEATHER_FAHRENHEIT = 1, WEATHER_TEMP_UNIT_COUNT };
+  enum WEATHER_WIND_UNIT { WEATHER_KMH = 0, WEATHER_MPH = 1, WEATHER_WIND_UNIT_COUNT };
+
   // Sleep screen settings
   uint8_t sleepScreen = DARK;
   // Sleep screen cover mode settings
@@ -205,6 +208,8 @@ class CrossPointSettings {
 
   // Weather city selection (0=Hanoi, 1=TPHCM, 2=DaNang)
   uint8_t weatherCity = 0;
+  uint8_t weatherTempUnit = WEATHER_CELSIUS;
+  uint8_t weatherWindUnit = WEATHER_KMH;
 
   // BLE Remote settings
   uint8_t bleEnabled = 0;                  // 0=disabled, 1=enabled

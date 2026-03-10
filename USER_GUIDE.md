@@ -145,6 +145,14 @@ The Settings screen allows you to configure the device's behavior. There are a f
   - "In Reader" - Show battery percentage everywhere except in reading mode
   - "Always" - Always hide battery percentage
 - **Refresh Frequency**: Set how often the screen does a full refresh while reading to reduce ghosting; options are every 1, 5, 10, 15, or 30 pages.
+- **Weather Temperature Unit**: Choose weather temperature units:
+  - "Celsius (°C)" (default)
+  - "Fahrenheit (°F)"
+  - Applies to the Weather tool and weather values shown on Home/Sleep weather info lines.
+- **Weather Wind Unit**: Choose weather wind-speed units:
+  - "km/h" (default)
+  - "mph"
+  - Applies to wind speed shown in the Weather tool.
 
 - **UI Theme**: Set which UI theme to use:
   - "Classic" - The original Crosspoint theme

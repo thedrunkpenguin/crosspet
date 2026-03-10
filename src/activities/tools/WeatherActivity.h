@@ -45,6 +45,10 @@ class WeatherActivity final : public Activity {
   static bool loadWeatherCache(WeatherData& out, uint8_t& cityIdx, char* timeBuf, size_t timeBufLen,
                                char* autoCityBuf = nullptr, size_t autoCityBufLen = 0);
   static const char* weatherCodeToString(int code);
+  static float convertTemperatureForDisplay(float celsius);
+  static float convertWindSpeedForDisplay(float kmh);
+  static const char* getTemperatureUnitSymbol();
+  static const char* getWindSpeedUnitLabel();
 
   // Silent background refresh: WiFi connect → fetch → cache → WiFi off.
   // Returns: 0=ok, 1=no saved wifi creds, 2=wifi connect timeout, 3=geo fail, 4=api fail, 5=parse fail

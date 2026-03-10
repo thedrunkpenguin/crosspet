@@ -460,9 +460,10 @@ void SleepActivity::renderClockSleepScreen() const {
       // Use autoCity for Auto mode (wCity=0), otherwise use manual city name
       const char* cityName = (wCity == 0 && autoCity[0]) ? autoCity
                              : WeatherActivity::CITIES[wCity < WeatherActivity::CITY_COUNT ? wCity : 0].name;
-      snprintf(weatherLine, sizeof(weatherLine), "%s: %.0f°C  %s  %d%%",
+      snprintf(weatherLine, sizeof(weatherLine), "%s: %.0f%s  %s  %d%%",
                cityName,
-               wData.temperature,
+               WeatherActivity::convertTemperatureForDisplay(wData.temperature),
+               WeatherActivity::getTemperatureUnitSymbol(),
                WeatherActivity::weatherCodeToString(wData.weatherCode),
                wData.humidity);
       weatherLineH = renderer.getLineHeight(SMALL_FONT_ID) + 4;

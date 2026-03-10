@@ -47,6 +47,12 @@ inline const std::vector<SettingInfo>& getSettingsList() {
           [] { return PET_SETTINGS.homeShowWeather; },
           [](uint8_t v) { PET_SETTINGS.homeShowWeather = v; PET_SETTINGS.saveToFile(); },
           "homeShowWeather", StrId::STR_CAT_DISPLAY),
+            SettingInfo::Enum(StrId::STR_WEATHER_TEMP_UNIT, &CrossPointSettings::weatherTempUnit,
+            {StrId::STR_CELSIUS, StrId::STR_FAHRENHEIT},
+            "weatherTempUnit", StrId::STR_CAT_DISPLAY),
+            SettingInfo::Enum(StrId::STR_WEATHER_WIND_UNIT, &CrossPointSettings::weatherWindUnit,
+            {StrId::STR_KMH, StrId::STR_MPH},
+            "weatherWindUnit", StrId::STR_CAT_DISPLAY),
       SettingInfo::DynamicToggle(
           StrId::STR_USE_FAHRENHEIT,
           [] { return PET_SETTINGS.useFahrenheit; },
