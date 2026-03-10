@@ -50,6 +50,11 @@ This repository is a fork of [trilwu/crosspet](https://github.com/trilwu/crosspe
 - **Debug capture firmware (for collecting HID logs):** [firmware/crosspet-bt-debug-capture.bin](./firmware/crosspet-bt-debug-capture.bin)
 - **Production firmware (slim, logging disabled):** [firmware/crosspet-bt-production.bin](./firmware/crosspet-bt-production.bin)
 
+### Releases
+
+- Production builds are also published in **GitHub Releases** for one-click download from the release assets.
+- Use the latest `crosspet-bt-production.bin` asset for normal use.
+
 ## What was added (Bluetooth implementation)
 
 - New BLE HID manager in `lib/hal/BluetoothHIDManager.*`
@@ -57,6 +62,8 @@ This repository is a fork of [trilwu/crosspet](https://github.com/trilwu/crosspe
 - Bluetooth settings UI activity in `src/activities/settings/BluetoothSettingsActivity.*`
 - Stable key injection path with startup noise gate, key cooldown, and profile-based key mapping
 - Inactivity disconnect handling to keep long reading sessions stable
+- Generic HID compatibility mapping for common keyboard/consumer/media page-turn keycodes
+- Learn mode in Bluetooth settings to capture your remote's own Previous/Next keycodes
 
 ## Supported devices
 
@@ -67,8 +74,18 @@ This repository is a fork of [trilwu/crosspet](https://github.com/trilwu/crosspe
 
 ### Likely to work / may be supported with profiling
 
-- BLE HID remotes that send standard keyboard or consumer-page keys
+- BLE HID remotes that send standard keyboard, consumer-page, or common media keycodes
 - Generic page-turn controllers presenting as BLE HID keyboard
+
+### Learn mode (for unknown remotes)
+
+If your remote connects but does not turn pages correctly:
+
+1. Go to **Settings → Bluetooth** and connect the remote
+2. Select **Learn Page-Turn Keys**
+3. Press your remote's **Previous Page** button, then **Next Page** button
+4. Confirm to save (mapping persists for future sessions)
+5. Use **Clear Learned Keys** in Bluetooth settings to reset
 
 If your device connects but buttons do not map correctly, capture debug logs (below) and open a support request.
 

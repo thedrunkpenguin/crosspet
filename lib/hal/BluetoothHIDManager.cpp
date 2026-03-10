@@ -10,6 +10,30 @@ static const char* HID_SERVICE_UUID = "1812";
 static const char* HID_REPORT_UUID = "2A4D";
 static const char* HID_INFO_UUID = "2A4A";
 
+static uint8_t extractGenericPageTurnKeycode(const uint8_t* report, size_t length) {
+  if (!report || length == 0) {
+    return 0x00;
+  }
+
+  // First pass: prefer known page-turn keycodes anywhere in short reports.
+  const size_t scanLen = length < 8 ? length : 8;
+  for (size_t i = 0; i < scanLen; i++) {
+    const uint8_t code = report[i];
+    if (DeviceProfiles::isCommonPageTurnCode(code)) {
+      return code;
+    }
+  }
+
+  // Second pass: typical keyboard report key slots (bytes 2..7)
+  for (size_t i = 2; i < scanLen; i++) {
+    if (report[i] != 0x00) {
+      return report[i];
+    }
+  }
+
+  return 0x00;
+}
+
 // Global static for singleton
 static BluetoothHIDManager* g_instance = nullptr;
 
@@ -574,34 +598,16 @@ void BluetoothHIDManager::onHIDNotify(NimBLERemoteCharacteristic* pChar, uint8_t
       LOG_DBG("BT", "Device %s: keycode=0x%02X, pressed=%d", device->profile->name, keycode, isPressed);
     }
   } else {
-    // Auto-detect mode: try to intelligently detect report format
-    // Priority 1: Check for GameBrick-style codes in byte[4] (A/B buttons 0x07, 0x09)
-    if (length >= 5) {
-      uint8_t byte4 = pData[4];
-      // If we see GameBrick button codes (0x07 or 0x09), use GameBrick format
-      if (byte4 == 0x07 || byte4 == 0x09) {
-        keycode = byte4;
-        // Some GameBrick firmware variants don't reliably toggle byte[0] bit0,
-        // so treat non-zero keycode as pressed as a fallback.
-        isPressed = ((pData[0] & 0x01) != 0) || (byte4 != 0x00);
-        LOG_DBG("BT", "Auto-detect (GameBrick codes detected): byte[4]=0x%02X, pressed=%d", keycode, isPressed);
-      } else if (byte4 == 0x00 && (pData[0] & 0x01)) {
-        // Button pressed (byte[0] bit set) but byte[4] is zero - might be in transition
-        // Fall through to standard keyboard check
-        keycode = length > 2 ? pData[2] : 0x00;
-        isPressed = (keycode != 0x00);
-        LOG_DBG("BT", "Auto-detect (standard keyboard): keycode=0x%02X, pressed=%d", keycode, isPressed);
-      } else {
-        // No GameBrick codes in byte[4], try standard keyboard byte[2]
-        keycode = length > 2 ? pData[2] : 0x00;
-        isPressed = (keycode != 0x00);
-        LOG_DBG("BT", "Auto-detect (standard keyboard): keycode=0x%02X, pressed=%d", keycode, isPressed);
-      }
+    // Auto-detect mode: support a wider range of generic HID remotes.
+    keycode = extractGenericPageTurnKeycode(pData, length);
+
+    // Keep existing GameBrick bit0 press-state behavior when applicable.
+    if (length >= 5 && (keycode == 0x07 || keycode == 0x09)) {
+      isPressed = ((pData[0] & 0x01) != 0) || (keycode != 0x00);
+      LOG_DBG("BT", "Auto-detect (GameBrick-like): keycode=0x%02X, pressed=%d", keycode, isPressed);
     } else {
-      // Report too short for GameBrick, use standard keyboard format
-      keycode = length > 2 ? pData[2] : 0x00;
       isPressed = (keycode != 0x00);
-      LOG_DBG("BT", "Auto-detect (standard keyboard): keycode=0x%02X, pressed=%d", keycode, isPressed);
+      LOG_DBG("BT", "Auto-detect (generic HID): keycode=0x%02X, pressed=%d", keycode, isPressed);
     }
   }
   
@@ -713,29 +719,35 @@ uint8_t BluetoothHIDManager::mapKeycodeToButton(uint8_t keycode, const DevicePro
     }
   }
   
-  // No profile - fall back to generic HID consumer codes only
-  switch (keycode) {
-    case 0x09:   // Common GameBrick previous-page code
-      LOG_INF("BT", "Mapped key 0x09 (GameBrick fallback) -> PageBack");
+  // No profile - use broad common-key mapping for generic remotes/keyboards.
+  if (const auto* customProfile = DeviceProfiles::getCustomProfile()) {
+    if (keycode == customProfile->pageUpCode) {
+      LOG_INF("BT", "Mapped learned key 0x%02X -> PageBack", keycode);
       return HalGPIO::BTN_UP;
-    case 0x07:   // Common GameBrick next-page code
-      LOG_INF("BT", "Mapped key 0x07 (GameBrick fallback) -> PageForward");
+    }
+    if (keycode == customProfile->pageDownCode) {
+      LOG_INF("BT", "Mapped learned key 0x%02X -> PageForward", keycode);
       return HalGPIO::BTN_DOWN;
-    case 0xE9:   // Consumer Page Up
-      LOG_INF("BT", "Mapped key 0xE9 (Consumer PageUp) -> PageForward");
-      return HalGPIO::BTN_DOWN;
-    case 0xEA:   // Consumer Page Down
-      LOG_INF("BT", "Mapped key 0xEA (Consumer PageDown) -> PageBack");
-      return HalGPIO::BTN_UP;
-    
-    case 0x00:   // Key release/idle
-      return 0xFF;
-    
-    default:
-      // Ignore all other keycodes without a profile
-      LOG_DBG("BT", "Unmapped keycode: 0x%02X (no profile)", keycode);
-      return 0xFF;
+    }
   }
+
+  bool pageForward = false;
+  if (DeviceProfiles::mapCommonCodeToDirection(keycode, pageForward)) {
+    if (pageForward) {
+      LOG_INF("BT", "Mapped generic key 0x%02X -> PageForward", keycode);
+      return HalGPIO::BTN_DOWN;
+    }
+    LOG_INF("BT", "Mapped generic key 0x%02X -> PageBack", keycode);
+    return HalGPIO::BTN_UP;
+  }
+
+  if (keycode == 0x00) {
+    return 0xFF;
+  }
+
+  // Unknown key for generic device; ignore safely.
+  LOG_DBG("BT", "Unmapped keycode: 0x%02X (no profile)", keycode);
+  return 0xFF;
 }
 
 void BluetoothHIDManager::updateActivity() {
